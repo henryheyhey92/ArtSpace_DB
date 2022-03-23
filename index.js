@@ -9,7 +9,8 @@ const { TopologyDescriptionChangedEvent } = require('mongodb');
 //const COLLECTION_NAME=
 const ART_COLLECTION = "artwork";
 const USER_COLLECTION = "users";
-const MEDIUM_COLLECTION = "medium"
+const MEDIUM_COLLECTION = "medium";
+const COMMENTS_COLLECTION = "comments"
 
 const app = express();
 
@@ -34,7 +35,8 @@ async function main() {
             let { name, sex, contact_no, specialise, email } = req.body
 
             //must have name, sex, contact and email
-            if (name && sex && contact_no && email) {
+
+            if (name.trim() !== "" && sex.trim() !== "" && contact_no.trim() !== "" && email.trim() !== "") {
                 specialise = specialise.split(',');
 
                 specialise = specialise.map(function (each_sp_item) {
@@ -77,7 +79,7 @@ async function main() {
 
     //Delete user information
 
-    //Create Artwork API
+    //Create Artwork API (done for first stage)
     app.post('/create_art_post', async function (req, res) {
         try {
 
@@ -289,6 +291,45 @@ async function main() {
             })
         }
     })
+
+    //Create comments
+    app.post('/create_comment', async function (req, res){
+        try{
+            let {name, artwork_id, comment} = req.body;
+            let curr = new Date();
+            let currDate = curr.getFullYear() + "-" + curr.getDate() + "-" + curr.getDay();
+
+            if(name.trim() !== "" && name !== undefined && artwork_id.trim() !== ""){
+                await MongoUtil.getDB().collection(COMMENTS_COLLECTION).insertOne({
+                    name,
+                    "artwork_id": ObjectId(artwork_id),
+                    comment,
+                    "last_time_stamp": currDate
+                });
+                res.status(200);
+                res.json({
+                    'message': "comment added successfully"
+                })
+            }else{
+                res.status(206);
+                res.json({
+                    'message': "No content, please input content"
+                })
+            }
+
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
+    //retrieve comments base on artwork _id
+
+    //update comments
+
+
+    //delete comments
 
     
 
