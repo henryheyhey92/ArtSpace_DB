@@ -135,17 +135,33 @@ async function main() {
 
     //Get all posting 
     //And get by medium
-    //need to add on with get by price amount
+    //And query artwork by price greater equal than or lower equal than
     app.get('/retrieve_artwork', async function (req, res) {
         try {
             let criteria = {};
-
+            console.log(req.query.priceGte);
             if (req.query.medium) {
                 criteria['medium'] = {
                     '$regex': req.query.medium,
                     '$options': 'i'    //not case sensitive 
                 }
             }
+            let priceGte = parseInt(req.query.priceGte);
+            let priceLte = parseInt(req.query.priceLte);
+
+
+            if(priceGte){
+                criteria['price'] = {
+                    "$gte": priceGte
+                }
+            }
+
+            if(priceLte){
+                criteria['price'] = {
+                    "$lte": priceLte
+                }
+            }
+
             let results = await MongoUtil.getDB().collection(ART_COLLECTION).find(criteria).toArray();
             res.json({
                 'art_space': results
