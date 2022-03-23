@@ -70,7 +70,7 @@ async function main() {
         }
     })
 
-
+    //Create Artwork API
     app.post('/create_art_post', async function (req, res) {
         try {
 
@@ -203,6 +203,41 @@ async function main() {
             })
             console.log(e);
         }
+    })
+
+    //delete artwork 
+    //Need the object id and password to delete artwork
+    //how to do projection for delete???
+    app.delete('/delete_artwork/:id/:password', async function (req, res){
+
+        try{
+                let results = await MongoUtil.getDB().collection(ART_COLLECTION).find({
+                    '_id':ObjectId(req.params.id)
+                },{'password':1}).toArray();
+                
+                if(results[0].password === req.params.password){
+                    await MongoUtil.getDB().collection(ART_COLLECTION).deleteOne({
+                        '_id': ObjectId(req.params.id)
+                    })
+                    res.status(200);
+                    res.json({
+                        'message': "The document has been deleted"
+                    })
+                }else{
+                    res.status(401);
+                    res.json({
+                        'message': "Unauthorized"
+                    })
+                }
+        }catch (e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+            console.log(e)
+        }
+        
+        
     })
 
 }
