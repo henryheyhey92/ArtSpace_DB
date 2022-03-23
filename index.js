@@ -9,6 +9,7 @@ const { TopologyDescriptionChangedEvent } = require('mongodb');
 //const COLLECTION_NAME=
 const ART_COLLECTION = "artwork";
 const USER_COLLECTION = "users";
+const MEDIUM_COLLECTION = "medium"
 
 const app = express();
 
@@ -70,6 +71,12 @@ async function main() {
         }
     })
 
+    //Retrieve user information
+
+    //Edit user information
+
+    //Delete user information
+
     //Create Artwork API
     app.post('/create_art_post', async function (req, res) {
         try {
@@ -85,7 +92,7 @@ async function main() {
 
             //let last_time_stamp = new Date(req.body.last_time_stamp);
             let curr = new Date();
-            let currDate = curr.getFullYear()+"-"+curr.getDate()+"-"+curr.getDay();
+            let currDate = curr.getFullYear() + "-" + curr.getDate() + "-" + curr.getDay();
             medium = medium.split(',');
             medium = medium.map(function (each_medium) {
                 return each_medium.trim();
@@ -110,7 +117,7 @@ async function main() {
                 },
                 password,
                 price,
-                "last_time_stamp":  currDate
+                "last_time_stamp": currDate
             });
 
             res.status(200);
@@ -128,6 +135,7 @@ async function main() {
 
     //Get all posting 
     //And get by medium
+    //need to add on with get by price amount
     app.get('/retrieve_artwork', async function (req, res) {
         try {
             let criteria = {};
@@ -172,7 +180,7 @@ async function main() {
                 '_id': ObjectId(req.params.id)
             }, {
                 $currentDate: {
-                    "last_time_stamp": true 
+                    "last_time_stamp": true
                     //{ $type: "timestamp" }
                 },
                 $set: {
@@ -208,37 +216,65 @@ async function main() {
     //delete artwork 
     //Need the object id and password to delete artwork
     //how to do projection for delete???
-    app.delete('/delete_artwork/:id/:password', async function (req, res){
+    app.delete('/delete_artwork/:id/:password', async function (req, res) {
 
-        try{
-                let results = await MongoUtil.getDB().collection(ART_COLLECTION).find({
-                    '_id':ObjectId(req.params.id)
-                },{'password':1}).toArray();
-                
-                if(results[0].password === req.params.password){
-                    await MongoUtil.getDB().collection(ART_COLLECTION).deleteOne({
-                        '_id': ObjectId(req.params.id)
-                    })
-                    res.status(200);
-                    res.json({
-                        'message': "The document has been deleted"
-                    })
-                }else{
-                    res.status(401);
-                    res.json({
-                        'message': "Unauthorized"
-                    })
-                }
-        }catch (e){
+        try {
+            let results = await MongoUtil.getDB().collection(ART_COLLECTION).find({
+                '_id': ObjectId(req.params.id)
+            }, { 'password': 1 }).toArray();
+
+            if (results[0].password === req.params.password) {
+                await MongoUtil.getDB().collection(ART_COLLECTION).deleteOne({
+                    '_id': ObjectId(req.params.id)
+                })
+                res.status(200);
+                res.json({
+                    'message': "The document has been deleted"
+                })
+            } else {
+                res.status(401);
+                res.json({
+                    'message': "Unauthorized"
+                })
+            }
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
             })
             console.log(e)
         }
-        
-        
     })
+
+    //Create medium 
+    app.post('/create_medium', async function (req, res) {
+        let { name, code_type } = req.body;
+        try {
+            if(name && code_type){
+                await MongoUtil.getDB().collection(MEDIUM_COLLECTION).insertOne({
+                    name,
+                    code_type
+                })
+                res.status(200);
+                res.json({
+                    'message': "The medium record has been added successfully"
+                })
+            }else{
+                res.status(206)
+                res.json({
+                    'message': "Content not sufficient"
+                })
+            }
+            
+        } catch (e) {
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
+
+    
 
 }
 
