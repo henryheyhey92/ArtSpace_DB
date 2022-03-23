@@ -7,7 +7,7 @@ const { TopologyDescriptionChangedEvent } = require('mongodb');
 
 
 //const COLLECTION_NAME=
-const ART_COLLECTION = "art_space";
+const ART_COLLECTION = "artwork";
 const USER_COLLECTION = "users";
 
 const app = express();
@@ -53,7 +53,7 @@ async function main() {
                 res.json({
                     'message': "The user record has been added successfully"
                 })
-            }else{
+            } else {
                 res.status(206)
                 res.json({
                     'message': "Content not sufficient"
@@ -73,7 +73,7 @@ async function main() {
 
     app.post('/create_art_post', async function (req, res) {
         try {
-            
+
             let { image_link,
                 name,
                 description,
@@ -83,16 +83,18 @@ async function main() {
                 password,
                 price, } = req.body;
 
-                let last_time_stamp = new Date(req.body.last_time_stamp);
-                medium = medium.split(',');
-                medium = medium.map(function(each_medium){
-                    return each_medium.trim();
-                })
+            //let last_time_stamp = new Date(req.body.last_time_stamp);
+            let curr = new Date();
+            let currDate = curr.getFullYear()+"-"+curr.getDate()+"-"+curr.getDay();
+            medium = medium.split(',');
+            medium = medium.map(function (each_medium) {
+                return each_medium.trim();
+            })
 
             //Need to implement a find query of the user and add it into the create
             // or don need
             const db = MongoUtil.getDB();
-            console.log(medium)
+
 
             let results = await MongoUtil.getDB().collection(ART_COLLECTION).insertOne({
                 image_link,
@@ -101,14 +103,14 @@ async function main() {
                 category,
                 medium,
                 "artist": {
-                    "name" : artist.name,
-                    "sex" : artist.sex,
-                    "contact_no" : artist.contact_no,
-                    "email" : artist.email
+                    "name": artist.name,
+                    "sex": artist.sex,
+                    "contact_no": artist.contact_no,
+                    "email": artist.email
                 },
                 password,
                 price,
-                last_time_stamp
+                "last_time_stamp":  currDate
             });
 
             res.status(200);
@@ -118,7 +120,86 @@ async function main() {
         } catch (e) {
             res.status(500);
             res.json({
-                'message': "Internal server error. Please contact adminstrator"
+                'message': "Internal server error. Please contact administrator"
+            })
+            console.log(e);
+        }
+    })
+
+    //Get all posting 
+    //And get by medium
+    app.get('/retrieve_artwork', async function (req, res) {
+        try {
+            let criteria = {};
+
+            if (req.query.medium) {
+                criteria['medium'] = {
+                    '$regex': req.query.medium,
+                    '$options': 'i'    //not case sensitive 
+                }
+            }
+            let results = await MongoUtil.getDB().collection(ART_COLLECTION).find(criteria).toArray();
+            res.json({
+                'art_space': results
+            })
+        } catch (e) {
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
+
+    //Update artwork
+    app.put('/update_artwork/:id', async function (req, res) {
+        try {
+            let { image_link,
+                name,
+                description,
+                category,
+                medium,
+                artist,
+                password,
+                price, } = req.body;
+
+            //let last_time_stamp = new Date(req.body.last_time_stamp);
+            medium = medium.split(',');
+            medium = medium.map(function (each_medium) {
+                return each_medium.trim();
+            })
+
+            await MongoUtil.getDB().collection(ART_COLLECTION).updateOne({
+                '_id': ObjectId(req.params.id)
+            }, {
+                $currentDate: {
+                    "last_time_stamp": true 
+                    //{ $type: "timestamp" }
+                },
+                $set: {
+                    image_link,
+                    name,
+                    description,
+                    category,
+                    medium,
+                    "artist": {
+                        "name": artist.name,
+                        "sex": artist.sex,
+                        "contact_no": artist.contact_no,
+                        "email": artist.email
+                    },
+                    password,
+                    price
+                }
+            })
+            res.status(200);
+            res.json({
+                'message': 'Artwork updated successfully'
+            })
+
+        } catch (e) {
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
             })
             console.log(e);
         }
