@@ -326,6 +326,29 @@ async function main() {
     })
     //retrieve comments base on artwork _id
 
+    app.get('/retrieve/comment/:id', async function (req, res){
+        try{
+            let criteria = {};
+            console.log(req.params.id);
+
+            if(req.params.id){
+                criteria = {
+                    "artwork_id": ObjectId(req.params.id)
+                }
+            }
+
+            let results = await MongoUtil.getDB().collection(COMMENTS_COLLECTION).find(criteria).toArray();
+            res.status(200);
+            res.json({
+                'art_space': results
+            })
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
     //update comments
 
 
