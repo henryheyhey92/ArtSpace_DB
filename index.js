@@ -6,9 +6,9 @@ const MongoUtil = require('./MongoUtil');
 //const { TopologyDescriptionChangedEvent } = require('mongodb');
 const validateEmail = (email) => {
 
-    if(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)){
+    if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
         return true
-    }else{
+    } else {
         return false
     }
 };
@@ -34,7 +34,7 @@ async function main() {
             'message': "Welcome to my art space api!"
         })
     })
-  
+
     //Create new user
     app.post('/create/user', async function (req, res) {
         try {
@@ -51,29 +51,28 @@ async function main() {
                     'email': 1
                 }
             }
-            let results = await MongoUtil.getDB().collection(USER_COLLECTION).find(checkDuplicate, 
+            let results = await MongoUtil.getDB().collection(USER_COLLECTION).find(checkDuplicate,
                 projection).toArray();
-            console.log(results.length);
 
-            if(results.length !== 0){
+            if (results.length !== 0) {
                 res.status(302);
                 res.json({
                     'message': "user record found"
                 })
-            }else{
+            } else {
                 if (name.trim() !== "" && sex.trim() !== "" && email.trim() !== "") {
                     if (contact_no.length !== 8 && validateEmail(email)) {
                         sex = sex.trim().toLowerCase() === "male" ? "male" : (sex.trim().toLowerCase() === "female" ? "female" : 0);
                         //console.log(sex.trim().toLowerCase() === "male" ? "female" : "male");
-    
+
                         if (sex) {
                             specialise = specialise.split(',');
-    
+
                             specialise = specialise.map(function (each_sp_item) {
                                 return each_sp_item.trim();
                             })
-    
-    
+
+
                             const db = MongoUtil.getDB();
                             await db.collection(USER_COLLECTION).insertOne({
                                 name,
@@ -92,14 +91,14 @@ async function main() {
                                 'message': "not acceptable, wrong sex info"
                             })
                         }
-    
+
                     } else {
                         res.status(406);
                         res.json({
                             'message': "not acceptable"
                         })
                     }
-    
+
                 } else {
                     res.status(206)
                     res.json({
@@ -119,23 +118,23 @@ async function main() {
 
     //Retrieve user information
     //retrieve particular user information 
-    app.get('/retrieve/user', async function (req, res){
+    app.get('/retrieve/user', async function (req, res) {
 
-        try{
-            let name = req.query.name 
+        try {
+            let name = req.query.name
             let criteria = {}
-            if(name !== undefined && name.trim() !== ""){
+            if (name !== undefined && name.trim() !== "") {
                 criteria = {
                     name
                 }
             }
-            
+
             let results = await MongoUtil.getDB().collection(USER_COLLECTION).find(criteria).toArray();
             res.status(200);
             res.json({
                 'users': results
             })
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error"
@@ -145,8 +144,99 @@ async function main() {
 
 
     //Edit user information
+    //require params
+    app.put('/edit/user/:id', async function (req, res) {
+        try {
+            let { name, sex, contact_no, specialise, email } = req.body
+            contact_no = parseInt(contact_no);
+            //must have name, sex, contact and email
 
+            //check if the user exist or not 
+            let checkDuplicate = {
+                'email': email.trim()
+            }
+            let projection = {
+                'projection': {
+                    'email': 1
+                }
+            }
+            let results = await MongoUtil.getDB().collection(USER_COLLECTION).find(checkDuplicate,
+                projection).toArray();
+            if (results.length !== 0) {
+                res.status(302);
+                res.json({
+                    'message': "user record found"
+                })
+            } else {
+                if (name.trim() !== "" && sex.trim() !== "" && email.trim() !== "") {
+                    if (contact_no.length !== 8 && validateEmail(email)) {
+                        sex = sex.trim().toLowerCase() === "male" ? "male" : (sex.trim().toLowerCase() === "female" ? "female" : 0);
+                        
+                        if (sex) {
+                            specialise = specialise.split(',');
+
+                            specialise = specialise.map(function (each_sp_item) {
+                                return each_sp_item.trim();
+                            })
+                            console.log(specialise);
+
+                            const db = MongoUtil.getDB();
+                            await db.collection(USER_COLLECTION).updateOne({
+                                '_id': ObjectId(req.params.id)
+                            }, {
+                                '$set': {
+                                    name,
+                                    sex,
+                                    contact_no,
+                                    specialise,
+                                    email
+                                }
+                            })
+                            res.status(200);
+                            res.json({
+                                'message': "The user record has been updated successfully"
+                            })
+                        } else {
+                            res.status(406);
+                            res.json({
+                                'message': "not acceptable, wrong sex info"
+                            })
+                        }
+
+                    } else {
+                        res.status(406);
+                        res.json({
+                            'message': "not acceptable"
+                        })
+                    }
+
+                } else {
+                    res.status(206)
+                    res.json({
+                        'message': "Content not sufficient"
+                    })
+                }
+            }
+
+        } catch (e) {
+            res.status(500);
+            res.json({
+                'message': "internal server error"
+            })
+        }
+    })
     //Delete user information
+    app.delete('/delete/user/:id', async function (req, res){
+        try{
+            await MongoUtil.getDB().collection(USER_COLLECTION).deleteOne()
+        }catch{
+            res.status(500);
+            res.json({
+                'message': "Internal server error"
+            })
+        }
+    })
+
 
     //Create Artwork API (done for first stage)
     app.post('/create/art/post', async function (req, res) {
@@ -366,6 +456,37 @@ async function main() {
         }
     })
 
+    //Retrieve medium
+    app.get('/retrieve/medium/:id', async function (req, res){
+        try{
+            let id = req.params.id;
+            if(id !== "" && id !== undefined){
+
+                let criteria = {
+                    '_id': ObjectId(id)
+                }
+
+                let results = await MongoUtil.getDB().collection(MEDIUM_COLLECTION).find(criteria).toArray();
+
+                res.status(200);
+                res.json({
+                    'medium': results
+                })
+            }else{
+                res.status(206);
+                res.json({
+                    'message': "content not sufficient"
+                })
+            }
+
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error"
+            })
+        }
+    })
+
     //Create comments
     app.post('/create/comment', async function (req, res) {
         try {
@@ -425,9 +546,11 @@ async function main() {
     })
 
     //update comments base on the comment object id 
+    //may need to remove the artwork id
+    //Need to adjust the last_time_stamp
     app.put('/edit/comment/:id', async function (req, res) {
         try {
-            let { name, artwork_id, comment } = req.body;
+            let { comment } = req.body;
             await MongoUtil.getDB().collection(COMMENTS_COLLECTION).updateOne({
                 '_id': ObjectId(req.params.id)
             }, {
@@ -435,8 +558,6 @@ async function main() {
                     "last_time_stamp": true
                 },
                 $set: {
-                    name,
-                    artwork_id,
                     comment
                 }
             })
