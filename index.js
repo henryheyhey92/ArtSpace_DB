@@ -3,10 +3,16 @@ const cors = require('cors');
 require('dotenv').config();
 const ObjectId = require('mongodb').ObjectId;
 const MongoUtil = require('./MongoUtil');
-const { TopologyDescriptionChangedEvent } = require('mongodb');
+//const { TopologyDescriptionChangedEvent } = require('mongodb');
+const validateEmail = (email) => {
 
+    if(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)){
+        return true
+    }else{
+        return false
+    }
+};
 
-//const COLLECTION_NAME=
 const ART_COLLECTION = "artwork";
 const USER_COLLECTION = "users";
 const MEDIUM_COLLECTION = "medium";
@@ -33,36 +39,74 @@ async function main() {
     app.post('/create/user', async function (req, res) {
         try {
             let { name, sex, contact_no, specialise, email } = req.body
-
+            contact_no = parseInt(contact_no);
             //must have name, sex, contact and email
 
-            if (name.trim() !== "" && sex.trim() !== "" && contact_no.trim() !== "" && email.trim() !== "") {
-                specialise = specialise.split(',');
-
-                specialise = specialise.map(function (each_sp_item) {
-                    return each_sp_item.trim();
-                })
-
-
-                const db = MongoUtil.getDB();
-                await db.collection(USER_COLLECTION).insertOne({
-                    name,
-                    sex,
-                    contact_no,
-                    specialise,
-                    email
-                })
-                res.status(200);
-                res.json({
-                    'message': "The user record has been added successfully"
-                })
-            } else {
-                res.status(206)
-                res.json({
-                    'message': "Content not sufficient"
-                })
+            //check if the user exist or not 
+            let checkDuplicate = {
+                'email': email.trim()
             }
+            let projection = {
+                'projection': {
+                    'email': 1
+                }
+            }
+            let results = await MongoUtil.getDB().collection(USER_COLLECTION).find(checkDuplicate, 
+                projection).toArray();
+            console.log(results.length);
 
+            if(results.length !== 0){
+                res.status(302);
+                res.json({
+                    'message': "user record found"
+                })
+            }else{
+                if (name.trim() !== "" && sex.trim() !== "" && email.trim() !== "") {
+                    if (contact_no.length !== 8 && validateEmail(email)) {
+                        sex = sex.trim().toLowerCase() === "male" ? "male" : (sex.trim().toLowerCase() === "female" ? "female" : 0);
+                        //console.log(sex.trim().toLowerCase() === "male" ? "female" : "male");
+    
+                        if (sex) {
+                            specialise = specialise.split(',');
+    
+                            specialise = specialise.map(function (each_sp_item) {
+                                return each_sp_item.trim();
+                            })
+    
+    
+                            const db = MongoUtil.getDB();
+                            await db.collection(USER_COLLECTION).insertOne({
+                                name,
+                                sex,
+                                contact_no,
+                                specialise,
+                                email
+                            })
+                            res.status(200);
+                            res.json({
+                                'message': "The user record has been added successfully"
+                            })
+                        } else {
+                            res.status(406);
+                            res.json({
+                                'message': "not acceptable, wrong sex info"
+                            })
+                        }
+    
+                    } else {
+                        res.status(406);
+                        res.json({
+                            'message': "not acceptable"
+                        })
+                    }
+    
+                } else {
+                    res.status(206)
+                    res.json({
+                        'message': "Content not sufficient"
+                    })
+                }
+            }
 
         } catch (e) {
 
@@ -152,13 +196,13 @@ async function main() {
             let priceLte = parseInt(req.query.priceLte);
 
 
-            if(priceGte){
+            if (priceGte) {
                 criteria['price'] = {
                     "$gte": priceGte
                 }
             }
 
-            if(priceLte){
+            if (priceLte) {
                 criteria['price'] = {
                     "$lte": priceLte
                 }
@@ -239,9 +283,11 @@ async function main() {
         try {
             let results = await MongoUtil.getDB().collection(ART_COLLECTION).find({
                 '_id': ObjectId(req.params.id)
-            }, { 'projection':{
-                'password':1
-            } }).toArray();
+            }, {
+                'projection': {
+                    'password': 1
+                }
+            }).toArray();
 
 
             if (results[0].password === req.params.password) {
@@ -271,7 +317,7 @@ async function main() {
     app.post('/create/medium', async function (req, res) {
         let { name, code_type } = req.body;
         try {
-            if(name && code_type){
+            if (name && code_type) {
                 await MongoUtil.getDB().collection(MEDIUM_COLLECTION).insertOne({
                     name,
                     code_type
@@ -280,13 +326,13 @@ async function main() {
                 res.json({
                     'message': "The medium record has been added successfully"
                 })
-            }else{
+            } else {
                 res.status(206)
                 res.json({
                     'message': "Content not sufficient"
                 })
             }
-            
+
         } catch (e) {
             res.status(500);
             res.json({
@@ -296,13 +342,13 @@ async function main() {
     })
 
     //Create comments
-    app.post('/create/comment', async function (req, res){
-        try{
-            let {name, artwork_id, comment} = req.body;
+    app.post('/create/comment', async function (req, res) {
+        try {
+            let { name, artwork_id, comment } = req.body;
             let curr = new Date();
             let currDate = curr.getFullYear() + "-" + curr.getDate() + "-" + curr.getDay();
 
-            if(name.trim() !== "" && name !== undefined && artwork_id.trim() !== ""){
+            if (name.trim() !== "" && name !== undefined && artwork_id.trim() !== "") {
                 await MongoUtil.getDB().collection(COMMENTS_COLLECTION).insertOne({
                     name,
                     "artwork_id": ObjectId(artwork_id),
@@ -313,14 +359,14 @@ async function main() {
                 res.json({
                     'message': "comment added successfully"
                 })
-            }else{
+            } else {
                 res.status(206);
                 res.json({
                     'message': "No content, please input content"
                 })
             }
 
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
@@ -329,12 +375,12 @@ async function main() {
     })
 
     //retrieve comments base on artwork_id
-    app.get('/retrieve/comment', async function (req, res){
-        try{
+    app.get('/retrieve/comment', async function (req, res) {
+        try {
             let criteria = {};
             console.log(req.query.id);
 
-            if(req.query.id){
+            if (req.query.id) {
                 criteria = {
                     "artwork_id": ObjectId(req.query.id)
                 }
@@ -345,7 +391,7 @@ async function main() {
             res.json({
                 'art_space': results
             })
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
@@ -354,14 +400,14 @@ async function main() {
     })
 
     //update comments base on the comment object id 
-    app.put('/edit/comment/:id', async function (req, res){
-        try{
-            let {name, artwork_id, comment} = req.body;
+    app.put('/edit/comment/:id', async function (req, res) {
+        try {
+            let { name, artwork_id, comment } = req.body;
             await MongoUtil.getDB().collection(COMMENTS_COLLECTION).updateOne({
                 '_id': ObjectId(req.params.id)
             }, {
-                $currentDate:{
-                    "last_time_stamp": true 
+                $currentDate: {
+                    "last_time_stamp": true
                 },
                 $set: {
                     name,
@@ -373,7 +419,7 @@ async function main() {
             res.json({
                 'message': 'comment been updated'
             })
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
@@ -383,24 +429,24 @@ async function main() {
 
 
     //delete comments base on the comment object id 
-    app.delete('/delete/comment', async function (req, res){
-        try{
+    app.delete('/delete/comment', async function (req, res) {
+        try {
             await MongoUtil.getDB().collection(COMMENTS_COLLECTION).deleteOne({
                 '_id': ObjectId(req.params.id)
             })
             res.status(200);
             res.json({
-                'message':'The document has been deleted' 
+                'message': 'The document has been deleted'
             })
 
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
             })
         }
     })
-    
+
 
 }
 
