@@ -30,7 +30,7 @@ async function main() {
     })
 
     //Create new user
-    app.post('/create_user', async function (req, res) {
+    app.post('/create/user', async function (req, res) {
         try {
             let { name, sex, contact_no, specialise, email } = req.body
 
@@ -80,7 +80,7 @@ async function main() {
     //Delete user information
 
     //Create Artwork API (done for first stage)
-    app.post('/create_art_post', async function (req, res) {
+    app.post('/create/art/post', async function (req, res) {
         try {
 
             let { image_link,
@@ -138,7 +138,7 @@ async function main() {
     //Get all posting 
     //And get by medium
     //And query artwork by price greater equal than or lower equal than
-    app.get('/retrieve_artwork', async function (req, res) {
+    app.get('/retrieve/artwork', async function (req, res) {
         try {
             let criteria = {};
             console.log(req.query.priceGte);
@@ -177,7 +177,7 @@ async function main() {
     })
 
     //Update artwork
-    app.put('/update_artwork/:id', async function (req, res) {
+    app.put('/update/artwork/:id', async function (req, res) {
         try {
             let { image_link,
                 name,
@@ -234,12 +234,15 @@ async function main() {
     //delete artwork 
     //Need the object id and password to delete artwork
     //how to do projection for delete???
-    app.delete('/delete_artwork/:id/:password', async function (req, res) {
+    app.delete('/delete/artwork/:id/:password', async function (req, res) {
 
         try {
             let results = await MongoUtil.getDB().collection(ART_COLLECTION).find({
                 '_id': ObjectId(req.params.id)
-            }, { 'password': 1 }).toArray();
+            }, { 'projection':{
+                'password':1
+            } }).toArray();
+
 
             if (results[0].password === req.params.password) {
                 await MongoUtil.getDB().collection(ART_COLLECTION).deleteOne({
@@ -265,7 +268,7 @@ async function main() {
     })
 
     //Create medium 
-    app.post('/create_medium', async function (req, res) {
+    app.post('/create/medium', async function (req, res) {
         let { name, code_type } = req.body;
         try {
             if(name && code_type){
@@ -293,7 +296,7 @@ async function main() {
     })
 
     //Create comments
-    app.post('/create_comment', async function (req, res){
+    app.post('/create/comment', async function (req, res){
         try{
             let {name, artwork_id, comment} = req.body;
             let curr = new Date();
@@ -324,16 +327,16 @@ async function main() {
             })
         }
     })
-    //retrieve comments base on artwork _id
 
-    app.get('/retrieve/comment/:id', async function (req, res){
+    //retrieve comments base on artwork_id
+    app.get('/retrieve/comment', async function (req, res){
         try{
             let criteria = {};
-            console.log(req.params.id);
+            console.log(req.query.id);
 
-            if(req.params.id){
+            if(req.query.id){
                 criteria = {
-                    "artwork_id": ObjectId(req.params.id)
+                    "artwork_id": ObjectId(req.query.id)
                 }
             }
 
@@ -349,11 +352,54 @@ async function main() {
             })
         }
     })
-    //update comments
+
+    //update comments base on the comment object id 
+    app.put('/edit/comment/:id', async function (req, res){
+        try{
+            let {name, artwork_id, comment} = req.body;
+            await MongoUtil.getDB().collection(COMMENTS_COLLECTION).updateOne({
+                '_id': ObjectId(req.params.id)
+            }, {
+                $currentDate:{
+                    "last_time_stamp": true 
+                },
+                $set: {
+                    name,
+                    artwork_id,
+                    comment
+                }
+            })
+            res.status(200)
+            res.json({
+                'message': 'comment been updated'
+            })
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
 
 
-    //delete comments
+    //delete comments base on the comment object id 
+    app.delete('/delete/comment', async function (req, res){
+        try{
+            await MongoUtil.getDB().collection(COMMENTS_COLLECTION).deleteOne({
+                '_id': ObjectId(req.params.id)
+            })
+            res.status(200);
+            res.json({
+                'message':'The document has been deleted' 
+            })
 
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
     
 
 }
