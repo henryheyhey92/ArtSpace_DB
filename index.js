@@ -34,7 +34,7 @@ async function main() {
             'message': "Welcome to my art space api!"
         })
     })
-
+  
     //Create new user
     app.post('/create/user', async function (req, res) {
         try {
@@ -118,6 +118,31 @@ async function main() {
     })
 
     //Retrieve user information
+    //retrieve particular user information 
+    app.get('/retrieve/user', async function (req, res){
+
+        try{
+            let name = req.query.name 
+            let criteria = {}
+            if(name !== undefined && name.trim() !== ""){
+                criteria = {
+                    name
+                }
+            }
+            
+            let results = await MongoUtil.getDB().collection(USER_COLLECTION).find(criteria).toArray();
+            res.status(200);
+            res.json({
+                'users': results
+            })
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error"
+            })
+        }
+    })
+
 
     //Edit user information
 
