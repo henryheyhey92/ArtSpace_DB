@@ -251,9 +251,6 @@ async function main() {
                 password,
                 price, } = req.body;
 
-            //let last_time_stamp = new Date(req.body.last_time_stamp);
-            let curr = new Date();
-            let currDate = curr.getFullYear() + "-" + curr.getDate() + "-" + curr.getDay();
             medium = medium.split(',');
             medium = medium.map(function (each_medium) {
                 return each_medium.trim();
@@ -278,7 +275,7 @@ async function main() {
                 },
                 password,
                 price,
-                "last_time_stamp": currDate
+                "last_time_stamp": new Date()
             });
 
             res.status(200);
@@ -409,10 +406,31 @@ async function main() {
                 await MongoUtil.getDB().collection(ART_COLLECTION).deleteOne({
                     '_id': ObjectId(req.params.id)
                 })
+                let idResult = await MongoUtil.getDB().collection(COMMENTS_COLLECTION).find({
+                    'artwork_id': ObjectId(req.params.id)
+                }, {
+                    'projection': {
+                        '_id': 1
+                    }
+                }).toArray();
+                console.log(idResult);
+                console.log(idResult[0]);
+                console.log(idResult[0]._id);
+                let newResult = []
+                for(let x of idResult){
+                    newResult.push(x._id)
+                }
+                console.log(newResult);
+                await MongoUtil.getDB().collection(COMMENTS_COLLECTION).deleteMany({
+                    '_id': {
+                        $in: newResult
+                    }
+                })
                 res.status(200);
                 res.json({
                     'message': "The document has been deleted"
                 })
+
             } else {
                 res.status(401);
                 res.json({
@@ -491,15 +509,13 @@ async function main() {
     app.post('/create/comment', async function (req, res) {
         try {
             let { name, artwork_id, comment } = req.body;
-            let curr = new Date();
-            let currDate = curr.getFullYear() + "-" + curr.getDate() + "-" + curr.getDay();
-
+           
             if (name.trim() !== "" && name !== undefined && artwork_id.trim() !== "") {
                 await MongoUtil.getDB().collection(COMMENTS_COLLECTION).insertOne({
                     name,
                     "artwork_id": ObjectId(artwork_id),
                     comment,
-                    "last_time_stamp": currDate
+                    "last_time_stamp": new Date()
                 });
                 res.status(200);
                 res.json({
@@ -598,8 +614,8 @@ async function main() {
 
 main();
 
-
-app.listen(process.env.PORT, function () {
+//process.env.PORT
+app.listen(3000, function () {
     console.log("Server has started")
 })
 
