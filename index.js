@@ -332,6 +332,28 @@ async function main() {
         }
     })
 
+    app.get('/search/artwork', async function(req, res){
+        try{
+            let db = MongoUtil.getDB();
+            db.collection(ART_COLLECTION).createIndex( { name: "text" , description: "text", } );
+            let results = await db.collection(ART_COLLECTION).find({
+                $text: {
+                    $search: req.query.searchText
+            }}, {score : {
+                $meta : "textScore"
+            }}).toArray();
+            res.status(200);
+            res.json({
+                'art_space': results
+            })
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
+
     //Update artwork
     app.put('/update/artwork/:id', async function (req, res) {
         try {
