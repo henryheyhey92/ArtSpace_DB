@@ -334,8 +334,9 @@ async function main() {
 
     app.get('/search/artwork', async function(req, res){
         try{
+            console.log(req.query.searchText);
             let db = MongoUtil.getDB();
-            db.collection(ART_COLLECTION).createIndex( { name: "text" , description: "text", } );
+            db.collection(ART_COLLECTION).createIndex( { name : "text" , description: "text" } );
             let results = await db.collection(ART_COLLECTION).find({
                 $text: {
                     $search: req.query.searchText
@@ -637,7 +638,7 @@ async function main() {
 main();
 
 //process.env.PORT
-app.listen(3000, function () {
+app.listen(process.env.PORT, function () {
     console.log("Server has started")
 })
 
