@@ -530,6 +530,28 @@ async function main() {
         }
     })
 
+
+        //Retrieve medium without id
+        app.get('/retrieve/medium', async function (req, res){
+            try{
+    
+                    let criteria = {};
+    
+                    let results = await MongoUtil.getDB().collection(MEDIUM_COLLECTION).find(criteria).toArray();
+    
+                    res.status(200);
+                    res.json({
+                        'medium': results
+                    })
+    
+            }catch(e){
+                res.status(500);
+                res.json({
+                    'message': "Internal server error"
+                })
+            }
+        })
+
     //Create comments
     app.post('/create/comment', async function (req, res) {
         try {
