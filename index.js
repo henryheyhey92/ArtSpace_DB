@@ -322,6 +322,7 @@ async function main() {
             }
 
             let results = await MongoUtil.getDB().collection(ART_COLLECTION).find(criteria).toArray();
+            res.status(200);
             res.json({
                 'art_space': results
             })
@@ -636,10 +637,11 @@ async function main() {
     //retrieve category information
     app.get('/retrieve/category', async function (req, res){
         try{
-            let results = await MongoUtil.getDB().collection(CATEGORY_COLLECTION).find({}).toArray();
+            let criteria = {}
+            let results = await MongoUtil.getDB().collection(CATEGORY_COLLECTION).find(criteria).toArray();
             res.status(200);
             res.json({
-                'category': results
+                'art_space': results
             })
         }catch(e){
             res.status(500);
@@ -648,7 +650,6 @@ async function main() {
             })
         }
     })
-
 
 }
 
