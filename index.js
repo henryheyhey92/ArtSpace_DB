@@ -16,7 +16,8 @@ const validateEmail = (email) => {
 const ART_COLLECTION = "artwork";
 const USER_COLLECTION = "users";
 const MEDIUM_COLLECTION = "medium";
-const COMMENTS_COLLECTION = "comments"
+const COMMENTS_COLLECTION = "comments";
+const CATEGORY_COLLECTION = "category";
 
 const app = express();
 
@@ -625,6 +626,22 @@ async function main() {
             })
 
         } catch (e) {
+            res.status(500);
+            res.json({
+                'message': "Internal server error. Please contact administrator"
+            })
+        }
+    })
+    
+    //retrieve category information
+    app.get('/retrieve/category', async function (req, res){
+        try{
+            let results = await MongoUtil.getDB().collection(CATEGORY_COLLECTION).find({}).toArray();
+            res.status(200);
+            res.json({
+                'category': results
+            })
+        }catch(e){
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
