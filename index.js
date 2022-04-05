@@ -252,7 +252,7 @@ async function main() {
                 password,
                 price, } = req.body;
 
-            medium = medium.split(',');
+            // medium = medium.split(',');
             medium = medium.map(function (each_medium) {
                 return each_medium.trim();
             })
