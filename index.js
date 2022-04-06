@@ -471,6 +471,36 @@ async function main() {
         }
     })
 
+    app.get('/retrieve/password/:id/:password', async function(req, res){
+        try{
+            let results = await MongoUtil.getDB().collection(ART_COLLECTION).find({
+                '_id': ObjectId(req.params.id)
+            }, {
+                'projection': {
+                    'password': 1
+                }
+            }).toArray();
+
+            if(req.params.password === results[0].password){
+                res.status(500);
+                res.json({
+                    'result': true
+                })
+            }else{
+                res.status(401);
+                res.json({
+                    'message': "Unauthorized"
+                })
+            }
+        }catch(e){
+            res.status(500);
+            res.json({
+                'message': 'Internal server error. PLease contact administrator'
+            })
+            console.log(e)
+        }
+    })
+
     //Create medium 
     app.post('/create/medium', async function (req, res) {
         let { name, code_type } = req.body;
