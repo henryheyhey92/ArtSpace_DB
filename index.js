@@ -489,7 +489,7 @@ async function main() {
             }else{
                 res.status(401);
                 res.json({
-                    'message': "Unauthorized"
+                    'result': Boolean(false)
                 })
             }
         }catch(e){
