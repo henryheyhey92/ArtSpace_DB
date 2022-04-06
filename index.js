@@ -440,7 +440,7 @@ async function main() {
                 }).toArray();
                 console.log(idResult);
                 console.log(idResult[0]);
-                console.log(idResult[0]._id);
+                // console.log(idResult[0]._id);
                 let newResult = []
                 for(let x of idResult){
                     newResult.push(x._id)
