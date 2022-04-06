@@ -482,7 +482,7 @@ async function main() {
             }).toArray();
 
             if(req.params.password === results[0].password){
-                res.status(500);
+                res.status(200);
                 res.json({
                     'result': true
                 })
