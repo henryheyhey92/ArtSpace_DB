@@ -370,7 +370,7 @@ async function main() {
                 price, } = req.body;
 
             //let last_time_stamp = new Date(req.body.last_time_stamp);
-            medium = medium.split(',');
+            // medium = medium.split(',');
             medium = medium.map(function (each_medium) {
                 return each_medium.trim();
             })
