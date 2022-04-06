@@ -484,7 +484,7 @@ async function main() {
             if(req.params.password === results[0].password){
                 res.status(200);
                 res.json({
-                    'result': true
+                    'result': Boolean(true)
                 })
             }else{
                 res.status(401);
