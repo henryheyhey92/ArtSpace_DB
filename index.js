@@ -305,6 +305,13 @@ async function main() {
                     '$options': 'i'    //not case sensitive 
                 }
             }
+
+            if (req.query.category){
+                criteria['category'] = {
+                    '$regex': req.query.category,
+                    '$options': 'i'
+                }
+            }
             let priceGte = parseInt(req.query.priceGte);
             let priceLte = parseInt(req.query.priceLte);
 
@@ -338,7 +345,7 @@ async function main() {
         try{
             console.log(req.query.searchText);
             let db = MongoUtil.getDB();
-            db.collection(ART_COLLECTION).createIndex( { name : "text" , description: "text" } );
+            db.collection(ART_COLLECTION).createIndex( { name : "text" , description: "text", medium: "text", category: "text" } );
             let results = await db.collection(ART_COLLECTION).find({
                 $text: {
                     $search: req.query.searchText
