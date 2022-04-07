@@ -345,10 +345,10 @@ async function main() {
         try{
             console.log(req.query.searchText);
             let db = MongoUtil.getDB();
-            db.collection(ART_COLLECTION).createIndex( { name : "text" , description: "text", medium: "text", category: "text" } );
+            db.collection(ART_COLLECTION).createIndex( { name : "text" , description: "text" } );
             let results = await db.collection(ART_COLLECTION).find({
                 $text: {
-                    $search: req.query.searchText
+                    $search: req.query.searchText.toLowerCase()
             }}, {score : {
                 $meta : "textScore"
             }}).toArray();
@@ -361,6 +361,7 @@ async function main() {
             res.json({
                 'message': "Internal server error. Please contact administrator"
             })
+            console.log(e)
         }
     })
 
