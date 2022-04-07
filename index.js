@@ -299,17 +299,25 @@ async function main() {
         try {
             let criteria = {};
             console.log(req.query.priceGte);
-            if (req.query.medium) {
+            console.log(req.query.medium);
+            console.log(req.query.category);
+
+            // if (req.query.medium) {
+            //     criteria['medium'] = {
+            //         '$regex': req.query.medium,
+            //         '$options': 'i'    //not case sensitive 
+            //     }
+            // }
+
+            if(req.query.medium) {
                 criteria['medium'] = {
-                    '$regex': req.query.medium,
-                    '$options': 'i'    //not case sensitive 
+                    '$all': req.query.medium
                 }
             }
 
             if (req.query.category){
                 criteria['category'] = {
-                    '$regex': req.query.category,
-                    '$options': 'i'
+                    '$regex': req.query.category
                 }
             }
             let priceGte = parseInt(req.query.priceGte);
@@ -338,6 +346,7 @@ async function main() {
             res.json({
                 'message': "Internal server error. Please contact administrator"
             })
+            console.log(e)
         }
     })
 
