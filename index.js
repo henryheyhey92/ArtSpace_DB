@@ -395,10 +395,10 @@ async function main() {
             await MongoUtil.getDB().collection(ART_COLLECTION).updateOne({
                 '_id': ObjectId(req.params.id)
             }, {
-                $currentDate: {
-                    "last_time_stamp": true
-                    //{ $type: "timestamp" }
-                },
+                // $currentDate: {
+                //     "last_time_stamp": true
+                //     //{ $type: "timestamp" }
+                // },
                 $set: {
                     image_link,
                     name,
@@ -412,7 +412,8 @@ async function main() {
                         "email": artist.email
                     },
                     password,
-                    price
+                    price,
+                    "last_time_stamp": new Date()
                 }
             })
             res.status(200);
