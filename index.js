@@ -505,7 +505,7 @@ async function main() {
                     'result': Boolean(true)
                 })
             }else{
-                res.status(401);
+                res.status(204);
                 res.json({
                     'result': Boolean(false),
                     'message': "wrong password"
