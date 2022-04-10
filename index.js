@@ -3,15 +3,8 @@ const cors = require('cors');
 require('dotenv').config();
 const ObjectId = require('mongodb').ObjectId;
 const MongoUtil = require('./MongoUtil');
+// const { validURL, validName } = require('./validation');
 //const { TopologyDescriptionChangedEvent } = require('mongodb');
-const validateEmail = (email) => {
-
-    if (/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(email)) {
-        return true
-    } else {
-        return false
-    }
-};
 
 const ART_COLLECTION = "artwork";
 const USER_COLLECTION = "users";
@@ -26,6 +19,109 @@ app.use(express.json());
 
 //enable CORS
 app.use(cors());
+
+const validURL = (str) => {
+    if (str === "") {
+        return false
+    }
+
+    let pattern = new RegExp('^(https?:\\/\\/)?' + // protocol
+        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+        '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+        '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+        '(\\#[-a-z\\d_]*)?$', 'i'); // fragment locator
+    return !!pattern.test(str);
+}
+
+const validName = (str) => {
+    if (str === "") {
+        return false
+    } else if (str.trim().length < 4) {
+        return false
+    } else {
+        return true
+    }
+}
+
+const validDescription = (str) => {
+    if (str === undefined || str === "") {
+        return false
+    } else {
+        return true
+    }
+}
+
+
+const validMedium = (str) => {
+    if (str.length <= 0) {
+        return false
+    } else {
+        return true
+    }
+}
+
+const validCategory = (str) => {
+    if (str) {
+        return true
+    } else {
+        return false
+    }
+}
+
+const validGender = (str) => {
+    if (str === "") {
+        return false
+    } else if (str === 'male' || str === 'female') {
+        return true
+    } else {
+        return false
+    }
+}
+
+const validContactNumber = (str) => {
+    let phoneno = /^\d{8}$/;
+    if (str === "") {
+        return false
+    } else if (phoneno.test(str)) {
+        return true
+    }
+    else {
+        return false
+    }
+}
+
+const validateEmail = (email) => {
+
+    if (email === "") {
+        return false
+    } else if (/^\w+([-]?\w+)*@\w+([-]?\w+)*(\.\w{2,3})+$/.test(email)) {
+        return true
+    } else {
+        return false
+    }
+};
+
+const validatePassword = (str) => {
+    var passw = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,20}$/;
+    if (str.match(passw)) {
+        return true
+    }
+    else {
+        return false
+    }
+}
+
+const validatePrice = (str) => {
+    if (isNaN(str)) {
+        return false
+    } else if (str === "") {
+        return false
+    } else {
+        return true
+    }
+}
+
 
 async function main() {
     await MongoUtil.connect(process.env.MONGO_URI, "Art_space_db");
@@ -172,14 +268,14 @@ async function main() {
                 if (name.trim() !== "" && sex.trim() !== "" && email.trim() !== "") {
                     if (contact_no.length !== 8 && validateEmail(email)) {
                         sex = sex.trim().toLowerCase() === "male" ? "male" : (sex.trim().toLowerCase() === "female" ? "female" : 0);
-                        
+
                         if (sex) {
                             specialise = specialise.split(',');
 
                             specialise = specialise.map(function (each_sp_item) {
                                 return each_sp_item.trim();
                             })
-                            console.log(specialise);
+                            // console.log(specialise);
 
                             const db = MongoUtil.getDB();
                             await db.collection(USER_COLLECTION).updateOne({
@@ -227,10 +323,10 @@ async function main() {
         }
     })
     //Delete user information
-    app.delete('/delete/user/:id', async function (req, res){
-        try{
+    app.delete('/delete/user/:id', async function (req, res) {
+        try {
             await MongoUtil.getDB().collection(USER_COLLECTION).deleteOne()
-        }catch{
+        } catch {
             res.status(500);
             res.json({
                 'message': "Internal server error"
@@ -257,32 +353,52 @@ async function main() {
                 return each_medium.trim();
             })
 
-            //Need to implement a find query of the user and add it into the create
-            // or don need
-            const db = MongoUtil.getDB();
+            if (validURL(image_link) &&
+                validName(name) &&
+                validDescription(description) &&
+                validCategory(category) &&
+                validMedium(medium) &&
+                validName(artist.name) &&
+                validGender(artist.sex) &&
+                validContactNumber(artist.contact_no) &&
+                validateEmail(artist.email) &&
+                validatePassword(password) &&
+                validatePrice(price)
+            ) {
+                // console.log("it works")
+
+                //Need to implement a find query of the user and add it into the create
+                // or don need
+                const db = MongoUtil.getDB();
 
 
-            let results = await MongoUtil.getDB().collection(ART_COLLECTION).insertOne({
-                image_link,
-                name,
-                description,
-                category,
-                medium,
-                "artist": {
-                    "name": artist.name,
-                    "sex": artist.sex,
-                    "contact_no": artist.contact_no,
-                    "email": artist.email
-                },
-                password,
-                price,
-                "last_time_stamp": new Date()
-            });
+                let results = await MongoUtil.getDB().collection(ART_COLLECTION).insertOne({
+                    image_link,
+                    name,
+                    description,
+                    category,
+                    medium,
+                    "artist": {
+                        "name": artist.name,
+                        "sex": artist.sex,
+                        "contact_no": artist.contact_no,
+                        "email": artist.email
+                    },
+                    password,
+                    price,
+                    "last_time_stamp": new Date()
+                });
 
-            res.status(200);
-            res.json({
-                'message': "The artwork record has been added successfully"
-            })
+                res.status(200);
+                res.json({
+                    'message': "The artwork record has been added successfully"
+                })
+            } else {
+                res.status(400);
+                res.json({
+                    'message': "Bad request"
+                })
+            }
         } catch (e) {
             res.status(500);
             res.json({
@@ -298,9 +414,9 @@ async function main() {
     app.get('/retrieve/artwork', async function (req, res) {
         try {
             let criteria = {};
-            console.log(req.query.priceGte);
-            console.log(req.query.medium);
-            console.log(req.query.category);
+            // console.log(req.query.priceGte);
+            // console.log(req.query.medium);
+            // console.log(req.query.category);
 
             // if (req.query.medium) {
             //     criteria['medium'] = {
@@ -309,13 +425,13 @@ async function main() {
             //     }
             // }
 
-            if(req.query.medium) {
+            if (req.query.medium) {
                 criteria['medium'] = {
                     '$all': req.query.medium
                 }
             }
 
-            if (req.query.category){
+            if (req.query.category) {
                 criteria['category'] = {
                     '$regex': req.query.category
                 }
@@ -350,22 +466,24 @@ async function main() {
         }
     })
 
-    app.get('/search/artwork', async function(req, res){
-        try{
-            console.log(req.query.searchText);
+    app.get('/search/artwork', async function (req, res) {
+        try {
             let db = MongoUtil.getDB();
-            db.collection(ART_COLLECTION).createIndex( { name : "text" , description: "text" } );
+            db.collection(ART_COLLECTION).createIndex({ name: "text", description: "text" });
             let results = await db.collection(ART_COLLECTION).find({
                 $text: {
                     $search: req.query.searchText.toLowerCase()
-            }}, {score : {
-                $meta : "textScore"
-            }}).toArray();
+                }
+            }, {
+                score: {
+                    $meta: "textScore"
+                }
+            }).toArray();
             res.status(200);
             res.json({
                 'art_space': results
             })
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
@@ -392,34 +510,52 @@ async function main() {
                 return each_medium.trim();
             })
 
-            await MongoUtil.getDB().collection(ART_COLLECTION).updateOne({
-                '_id': ObjectId(req.params.id)
-            }, {
-                // $currentDate: {
-                //     "last_time_stamp": true
-                //     //{ $type: "timestamp" }
-                // },
-                $set: {
-                    image_link,
-                    name,
-                    description,
-                    category,
-                    medium,
-                    "artist": {
-                        "name": artist.name,
-                        "sex": artist.sex,
-                        "contact_no": artist.contact_no,
-                        "email": artist.email
-                    },
-                    password,
-                    price,
-                    "last_time_stamp": new Date()
-                }
-            })
+            if (validURL(image_link) &&
+                validName(name) &&
+                validDescription(description) &&
+                validCategory(category) &&
+                validMedium(medium) &&
+                validName(artist.name) &&
+                validGender(artist.sex) &&
+                validContactNumber(artist.contact_no) &&
+                validateEmail(artist.email) &&
+                validatePassword(password) &&
+                validatePrice(price)){
+
+                await MongoUtil.getDB().collection(ART_COLLECTION).updateOne({
+                    '_id': ObjectId(req.params.id)
+                }, {
+                    // $currentDate: {
+                    //     "last_time_stamp": true
+                    //     //{ $type: "timestamp" }
+                    // },
+                    $set: {
+                        image_link,
+                        name,
+                        description,
+                        category,
+                        medium,
+                        "artist": {
+                            "name": artist.name,
+                            "sex": artist.sex,
+                            "contact_no": artist.contact_no,
+                            "email": artist.email
+                        },
+                        password,
+                        price,
+                        "last_time_stamp": new Date()
+                    }
+                })
             res.status(200);
             res.json({
                 'message': 'Artwork updated successfully'
             })
+        }else{
+            res.status(400)
+            res.json({
+                'message': "bad request"
+            })
+        }
 
         } catch (e) {
             res.status(500);
@@ -456,14 +592,14 @@ async function main() {
                         '_id': 1
                     }
                 }).toArray();
-                console.log(idResult);
-                console.log(idResult[0]);
+                // console.log(idResult);
+                // console.log(idResult[0]);
                 // console.log(idResult[0]._id);
                 let newResult = []
-                for(let x of idResult){
+                for (let x of idResult) {
                     newResult.push(x._id)
                 }
-                console.log(newResult);
+                // console.log(newResult);
                 await MongoUtil.getDB().collection(COMMENTS_COLLECTION).deleteMany({
                     '_id': {
                         $in: newResult
@@ -489,8 +625,8 @@ async function main() {
         }
     })
 
-    app.get('/retrieve/password/:id/:password', async function(req, res){
-        try{
+    app.get('/retrieve/password/:id/:password', async function (req, res) {
+        try {
             let results = await MongoUtil.getDB().collection(ART_COLLECTION).find({
                 '_id': ObjectId(req.params.id)
             }, {
@@ -499,19 +635,19 @@ async function main() {
                 }
             }).toArray();
 
-            if(req.params.password === results[0].password){
+            if (req.params.password === results[0].password) {
                 res.status(200);
                 res.json({
                     'result': Boolean(true)
                 })
-            }else{
+            } else {
                 res.status(204);
                 res.json({
                     'result': Boolean(false),
                     'message': "wrong password"
                 })
             }
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': 'Internal server error. PLease contact administrator'
@@ -549,10 +685,10 @@ async function main() {
     })
 
     //Retrieve medium
-    app.get('/retrieve/medium/:id', async function (req, res){
-        try{
+    app.get('/retrieve/medium/:id', async function (req, res) {
+        try {
             let id = req.params.id;
-            if(id !== "" && id !== undefined){
+            if (id !== "" && id !== undefined) {
 
                 let criteria = {
                     '_id': ObjectId(id)
@@ -564,14 +700,14 @@ async function main() {
                 res.json({
                     'medium': results
                 })
-            }else{
+            } else {
                 res.status(206);
                 res.json({
                     'message': "content not sufficient"
                 })
             }
 
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error"
@@ -580,32 +716,32 @@ async function main() {
     })
 
 
-        //Retrieve medium without id
-        app.get('/retrieve/medium', async function (req, res){
-            try{
-    
-                    let criteria = {};
-    
-                    let results = await MongoUtil.getDB().collection(MEDIUM_COLLECTION).find(criteria).toArray();
-    
-                    res.status(200);
-                    res.json({
-                        'medium': results
-                    })
-    
-            }catch(e){
-                res.status(500);
-                res.json({
-                    'message': "Internal server error"
-                })
-            }
-        })
+    //Retrieve medium without id
+    app.get('/retrieve/medium', async function (req, res) {
+        try {
+
+            let criteria = {};
+
+            let results = await MongoUtil.getDB().collection(MEDIUM_COLLECTION).find(criteria).toArray();
+
+            res.status(200);
+            res.json({
+                'medium': results
+            })
+
+        } catch (e) {
+            res.status(500);
+            res.json({
+                'message': "Internal server error"
+            })
+        }
+    })
 
     //Create comments
     app.post('/create/comment', async function (req, res) {
         try {
             let { name, artwork_id, comment } = req.body;
-           
+
             if (name.trim() !== "" && name !== undefined && artwork_id.trim() !== "") {
                 await MongoUtil.getDB().collection(COMMENTS_COLLECTION).insertOne({
                     name,
@@ -636,7 +772,7 @@ async function main() {
     app.get('/retrieve/comment', async function (req, res) {
         try {
             let criteria = {};
-            console.log(req.query.id);
+            // console.log(req.query.id);
 
             if (req.query.id) {
                 criteria = {
@@ -704,17 +840,17 @@ async function main() {
             })
         }
     })
-    
+
     //retrieve category information
-    app.get('/retrieve/category', async function (req, res){
-        try{
+    app.get('/retrieve/category', async function (req, res) {
+        try {
             let criteria = {}
             let results = await MongoUtil.getDB().collection(CATEGORY_COLLECTION).find(criteria).toArray();
             res.status(200);
             res.json({
                 'art_space': results
             })
-        }catch(e){
+        } catch (e) {
             res.status(500);
             res.json({
                 'message': "Internal server error. Please contact administrator"
@@ -727,7 +863,7 @@ async function main() {
 main();
 
 //process.env.PORT
-app.listen(process.env.PORT, function () {
+app.listen(3001, function () {
     console.log("Server has started")
 })
 
