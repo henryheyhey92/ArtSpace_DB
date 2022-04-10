@@ -12,7 +12,7 @@ The front-end react project can be found [https://github.com/henryheyhey92/Art-S
 
 # 1. Context
 
-This is a custom API built for the [Art Space SG](https://endearing-sopapillas-ef68c6.netlify.app/) project. The project is for purpose of create, read, update and delete of information related to artwork done by artist in sg. The application is built with [MongoDB](https://www.mongodb.com/) and [Express.js](https://expressjs.com/) 
+This is a custom API built for the [Art Space SG](https://endearing-sopapillas-ef68c6.netlify.app/) project (The project application link). The project is for purpose of create, read, update and delete of information related to artwork done by artist in sg. The application is built with [MongoDB](https://www.mongodb.com/) and [Express.js](https://expressjs.com/) 
 
 
 
