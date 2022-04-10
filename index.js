@@ -863,7 +863,7 @@ async function main() {
 main();
 
 //process.env.PORT
-app.listen(3001, function () {
+app.listen(process.env.PORT, function () {
     console.log("Server has started")
 })
 
