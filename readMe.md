@@ -24,13 +24,14 @@ The database has total of 5 collection (only 4 of the collection are in use now)
 
 # 3. Technologies Used
 
+- [MondoDB](https://www.mongodb.com/)
+    
+    for sample document oriented database
+
 - [Express.js](https://expressjs.com/)
 
-  This API uses Express .js, a fast, unopinionated, minimalist web framework for Node.js
+    For the purpose of API building in this project
 
-- [MondoDB](https://www.mongodb.com/)
-
-  This API uses MongoDB, a document-oriented database.
 
 
 # 4. Acknowledgements
