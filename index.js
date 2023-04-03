@@ -11,6 +11,7 @@ const USER_COLLECTION = "users";
 const MEDIUM_COLLECTION = "medium";
 const COMMENTS_COLLECTION = "comments";
 const CATEGORY_COLLECTION = "category";
+const PAINTING_COLLECTION = "paintingobject";
 
 const app = express();
 
@@ -858,14 +859,39 @@ async function main() {
         }
     })
 
+    app.get('/filter/painting', async function (req, res) {
+        try {
+            let { username } = req.query;
+            let criteria = {};
+
+            if (username) {
+                criteria['user.username'] = {
+                    '$regex': username,
+                    '$options': "i",
+                }
+            }
+
+            let results = await MongoUtil.getDB().collection(PAINTING_COLLECTION).find(criteria).toArray();
+            console.log("🚀 ~ file: index.js:874 ~ results:", results)
+            res.status(200);
+            res.json({
+                'art_space': results
+            })
+
+            
+        }catch (e) {
+            res.status(500);
+            res.json({
+                'message' : "Query failed"
+            })
+        }
+    })
+
 }
 
 main();
 
 //process.env.PORT
-app.listen(process.env.PORT, function () {
+app.listen(5000, function () {
     console.log("Server has started")
 })
-
-
-
